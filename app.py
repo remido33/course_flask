@@ -11,6 +11,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = settings.sqlalchemy_database_uri
 
 db = init_db(app)
 
+@app.route('/health')
+def health():
+    return Response(status=200)
 
 @app.route('/')
 def home() -> str:
@@ -27,9 +30,11 @@ def index() -> Response:
 def add_animal() -> tuple[Response, int]:
     data = AnimalCreate(**request.get_json())
     new_animal = Animal(
-        animal_type=data.animal_type,
+        type=data.type,
         name=data.name,
-        birth_date=data.birth_date
+        birth_date=data.birth_date,
+        breed=data.breed,
+        image_url=data.image_url,
     )
     db.session.add(new_animal)
     db.session.commit()
@@ -45,12 +50,15 @@ def add_animal() -> tuple[Response, int]:
 def update_animal(pk: int) -> Union[Response, tuple[Response, int]]:
     data = AnimalCreate(**request.get_json())
     animal = Animal.query.get(pk)
+
     if not animal:
         return jsonify({"message": "Animal not found"}), 404
 
-    animal.animal_type = data.animal_type
+    animal.type = data.type
     animal.name = data.name
     animal.birth_date = data.birth_date
+    animal.breed = data.breed
+    animal.image_url = data.image_url
     db.session.commit()
     return jsonify(
         {
